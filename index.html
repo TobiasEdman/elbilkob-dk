@@ -1,0 +1,1742 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Elbilkøb i Danmark — beslutningsstøtte</title>
+    <style>
+:root {
+  --bg: #0f1419;
+  --panel: #1a2129;
+  --line: #2b3540;
+  --text: #e6edf3;
+  --muted: #8b98a5;
+  --accent: #4cc38a;
+  --accent-dim: #2a6b4f;
+  --bar: #2d4a5e;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+#app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0 0 0.25rem;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 1.5rem 0 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs button {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+}
+
+.tabs button:hover { color: var(--text); }
+.tabs button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.controls {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.seg {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+.seg button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  padding: 0.45rem 1.1rem;
+  cursor: pointer;
+}
+.seg button:not(:last-child) { border-right: 1px solid var(--line); }
+.seg button.active { background: var(--accent-dim); color: var(--text); }
+
+.sliders {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.5rem 1.5rem;
+  margin: 0.75rem 0;
+}
+
+.sliders label {
+  display: grid;
+  grid-template-columns: 9rem 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.sliders input[type="range"] { accent-color: var(--accent); min-width: 0; }
+.sliders output {
+  min-width: 8ch;
+  text-align: right;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.sliders label[hidden] { display: none; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+th, td {
+  padding: 0.55rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  vertical-align: bottom;
+}
+
+th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.num { white-space: nowrap; }
+th.key { color: var(--accent); }
+td.netto-cell .netto-val { color: var(--accent); }
+th[aria-sort="ascending"]::after { content: " \2191"; color: var(--accent); }
+th[aria-sort="descending"]::after { content: " \2193"; color: var(--accent); }
+
+tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+
+.tag {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  background: var(--accent-dim);
+  color: var(--text);
+}
+.tag.bensin, .tag.diesel { background: #6b4a2a; }
+.tag.laddhybrid { background: #2a4a6b; }
+
+.netto-cell { position: relative; }
+.netto-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: var(--bar);
+  border-radius: 4px;
+  z-index: 0;
+  opacity: 0.55;
+}
+.netto-val { position: relative; z-index: 1; font-weight: 600; }
+
+.note { color: var(--muted); font-size: 0.75rem; }
+
+/* ---- marknad ---- */
+.marknad-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+  opacity: 0.45;
+}
+.chip.active { color: var(--text); opacity: 1; border-color: var(--accent-dim); }
+
+.seg-chips { width: 100%; margin-bottom: 0.35rem; }
+.seg-chip { opacity: 1; font-weight: 600; background: var(--panel); }
+.seg-chip:hover { border-color: var(--accent); }
+
+.dot {
+  display: inline-block;
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 50%;
+  margin-right: 0.4em;
+}
+.chip .dot { margin-right: 0; }
+
+.year-filter {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.year-filter input { accent-color: var(--accent); }
+
+#scatter-wrap { overflow-x: auto; margin: 0.5rem 0 1rem; }
+#scatter { width: 100%; min-width: 640px; height: auto; }
+#scatter .ax { fill: var(--muted); font-size: 12px; }
+#scatter .star { fill: var(--text); font-size: 13px; }
+#scatter circle { cursor: pointer; }
+#scatter circle:hover { fill-opacity: 1; }
+
+#cars-marknad a { color: var(--text); text-decoration: none; border-bottom: 1px dotted var(--muted); }
+#cars-marknad a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- q8-sidan ---- */
+.pagelink { color: var(--accent); text-decoration: none; }
+.pagelink:hover { text-decoration: underline; }
+
+h2 { font-size: 1.1rem; margin: 0 0 0.75rem; }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.card h3 { margin: 0 0 0.25rem; font-size: 1.05rem; }
+.card .pris { font-size: 1.5rem; font-weight: 700; color: var(--accent); margin: 0 0 0.75rem; }
+
+.card dl { margin: 0; display: grid; gap: 0.3rem; }
+.card dl div { display: flex; justify-content: space-between; gap: 1rem; }
+.card dt { color: var(--muted); font-size: 0.85rem; }
+.card dd { margin: 0; font-size: 0.85rem; text-align: right; }
+
+.annons-link {
+  display: inline-block;
+  margin-top: 0.85rem;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.annons-link:hover { text-decoration: underline; }
+
+#kalkyl { margin-top: 1rem; }
+#kalkyl .total-row td { font-weight: 700; color: var(--accent); border-top: 2px solid var(--line); }
+#kalkyl .ref-row td { color: var(--muted); font-size: 0.85rem; border-top: 1px dashed var(--line); }
+#kalkyl .ref-row td:first-child { font-style: italic; }
+
+.bmw-service {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid #d9a94a;
+  background: rgba(217, 169, 74, 0.06);
+  border-radius: 0 6px 6px 0;
+}
+.bmw-service h3 { font-size: 0.95rem; margin: 0 0 0.4rem; color: #d9a94a; }
+.service-list { margin: 0.25rem 0; padding-left: 1.1rem; display: grid; gap: 0.15rem; font-size: 0.85rem; }
+.service-list li.kommande { color: #d9a94a; font-style: italic; }
+
+.deal-done {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  background: var(--accent-dim);
+  color: var(--text);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.pb-verdict { font-size: 0.95rem; margin: 0.75rem 0; }
+#pb-table { margin-top: 0.5rem; }
+.pb-ok { color: var(--accent); font-size: 0.75rem; font-weight: 600; }
+td.pb-billig { color: var(--accent); font-weight: 600; }
+
+.garanti-row { margin: 0.9rem 0; }
+.garanti-label { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.3rem; }
+.garanti-bar {
+  position: relative;
+  height: 18px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.garanti-fill { position: absolute; top: 0; bottom: 0; left: 0; }
+.garanti-drive {
+  position: absolute; top: 0; bottom: 0;
+  background: repeating-linear-gradient(45deg, var(--bar), var(--bar) 6px, transparent 6px, transparent 12px);
+}
+
+.checklist { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.5rem; font-size: 0.92rem; }
+
+.slot-badge {
+  display: inline-block;
+  width: 1.4em;
+  height: 1.4em;
+  line-height: 1.4em;
+  text-align: center;
+  border-radius: 6px;
+  color: var(--bg);
+  font-size: 0.8em;
+  font-weight: 800;
+  margin-right: 0.35em;
+}
+
+td.cmp { white-space: nowrap; }
+td.cmp button {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  margin-right: 0.25rem;
+  cursor: pointer;
+}
+td.cmp button:hover { color: var(--text); border-color: var(--accent); }
+
+/* ---- dk-sidan: manuella bil-inputs ---- */
+.bil-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.bil-inputs fieldset {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.75rem 1rem 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+.bil-inputs legend { font-weight: 700; padding: 0 0.4rem; }
+.bil-inputs label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.bil-inputs input {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  padding: 0.3rem 0.5rem;
+  width: 9.5rem;
+}
+.bil-inputs input:focus { outline: none; border-color: var(--accent); }
+
+/* ---- alla.html: iframe-samlingssida ---- */
+.frames-body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+.frame-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem 0;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.frame-tabs button {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+.frame-tabs button:hover { color: var(--text); }
+.frame-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.frame-wrap { flex: 1; min-height: 0; }
+.frame-wrap iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: var(--bg);
+}
+.frame-wrap iframe[hidden] { display: none; }
+
+/* ---- recensionsblock i jämförelsepanelerna ---- */
+.review-wrap { margin-top: 0.75rem; }
+.review {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.83rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+.review summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+.rev-betyg { color: var(--muted); margin: 0.5rem 0 0.25rem; font-size: 0.8rem; }
+.rev-list { margin: 0.25rem 0; padding-left: 1.1rem; display: grid; gap: 0.15rem; }
+.rev-list.plus li::marker { content: "+ "; color: var(--accent); }
+.rev-list.minus li::marker { content: "− "; color: #e0a54a; }
+.rev-list.warn li::marker { content: "⚠ "; font-size: 0.8em; }
+
+footer { margin-top: 2rem; }
+footer code { color: var(--accent); }
+
+</style>
+  </head>
+  <body>
+    <main id="app">
+      <header>
+        <h1>Elbilkøb i Danmark — beslutningsstøtte</h1>
+        <p class="meta">
+          Sammenlign to brugte elbiler: ejeromkostninger, batterigaranti og tjekliste
+        </p>
+      </header>
+
+      <section class="controls">
+        <h2>Bilerne — indtast fra annoncen (Bilbasen/DBA)</h2>
+        <div class="bil-inputs">
+          <fieldset>
+            <legend><span class="slot-badge" style="background:#4cc38a">A</span> Bil A</legend>
+            <label>Navn <input id="navnA" type="text" value="Bil A" /></label>
+            <label>Pris (kr.) <input id="prisInA" type="number" value="350000" step="1000" /></label>
+            <label>Km-stand <input id="kmA" type="number" value="60000" step="1000" /></label>
+            <label>Rækkevidde WLTP (km) <input id="wltpA" type="number" value="450" step="5" /></label>
+            <label>Årgang <input id="aarA" type="number" value="2023" min="2015" max="2026" /></label>
+            <div class="review-wrap" id="review-A"></div>
+          </fieldset>
+          <fieldset>
+            <legend><span class="slot-badge" style="background:#2bb3c0">B</span> Bil B</legend>
+            <label>Navn <input id="navnB" type="text" value="Bil B" /></label>
+            <label>Pris (kr.) <input id="prisInB" type="number" value="420000" step="1000" /></label>
+            <label>Km-stand <input id="kmB" type="number" value="30000" step="1000" /></label>
+            <label>Rækkevidde WLTP (km) <input id="wltpB" type="number" value="550" step="5" /></label>
+            <label>Årgang <input id="aarB" type="number" value="2024" min="2015" max="2026" /></label>
+            <div class="review-wrap" id="review-B"></div>
+          </fieldset>
+        </div>
+        <p class="note">
+          Brugtbilpriser i Danmark er inkl. registreringsafgift — den er allerede betalt,
+          og elbiler har fortsat indfasningsrabat. Sammenlign altid totalprisen i annoncen.
+        </p>
+      </section>
+
+      <section class="controls">
+        <h2>Ejeromkostninger</h2>
+        <div class="sliders">
+          <label>
+            <span>Ejertid</span>
+            <input id="innehav" type="range" min="2" max="8" step="1" value="5" />
+            <output id="innehav-out"></output>
+          </label>
+          <label>
+            <span>Rente</span>
+            <input id="ranta" type="range" min="0" max="10" step="0.5" value="5.5" />
+            <output id="ranta-out"></output>
+          </label>
+          <label>
+            <span>Kørsel</span>
+            <input id="mil" type="range" min="8000" max="30000" step="500" value="16000" />
+            <output id="mil-out"></output>
+          </label>
+          <label>
+            <span>Elpris</span>
+            <input id="elpris" type="range" min="1.0" max="5.0" step="0.1" value="2.6" />
+            <output id="elpris-out"></output>
+          </label>
+          <label>
+            <span>Restværdi Bil A</span>
+            <input id="restA" type="range" min="20" max="70" step="1" value="45" />
+            <output id="restA-out"></output>
+          </label>
+          <label>
+            <span>Restværdi Bil B</span>
+            <input id="restB" type="range" min="20" max="70" step="1" value="45" />
+            <output id="restB-out"></output>
+          </label>
+          <label>
+            <span>Forsikring Bil A</span>
+            <input id="forsA" type="range" min="500" max="3000" step="50" value="1300" />
+            <output id="forsA-out"></output>
+          </label>
+          <label>
+            <span>Forsikring Bil B</span>
+            <input id="forsB" type="range" min="500" max="3000" step="50" value="1400" />
+            <output id="forsB-out"></output>
+          </label>
+          <label>
+            <span>Service + dæk</span>
+            <input id="service" type="range" min="200" max="1500" step="50" value="700" />
+            <output id="service-out"></output>
+          </label>
+          <label>
+            <span>Grøn ejerafgift</span>
+            <input id="ejerafgift" type="range" min="0" max="400" step="10" value="70" />
+            <output id="ejerafgift-out"></output>
+          </label>
+        </div>
+
+        <table id="kalkyl">
+          <thead>
+            <tr>
+              <th>Post (kr./md.)</th>
+              <th class="num" id="th-bilA">Bil A</th>
+              <th class="num" id="th-bilB">Bil B</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p class="note" id="kalkyl-verdict"></p>
+      </section>
+
+      <section class="controls">
+        <h2>Batterigaranti — 8 år / 160.000 km antaget (varierer pr. mærke)</h2>
+        <div id="garanti"></div>
+        <p class="note">
+          Fyldt = km-stand ved køb; skraveret = kørsel i ejertiden, mod 160.000 km-loftet.
+          Tesla LR: 192.000 km; Kia: 150.000 km — tjek det konkrete mærke.
+        </p>
+      </section>
+
+      <section id="view-marknad">
+        <h2>Markedet — AutoUncle.dk-øjebliksbillede</h2>
+        <div class="marknad-controls">
+          <div class="chips" id="model-chips"></div>
+          <label class="year-filter">
+            <input type="checkbox" id="only-2024" />
+            Kun årgang 2024
+          </label>
+        </div>
+        <p class="meta" id="marknad-meta"></p>
+        <div id="scatter-wrap">
+          <svg id="scatter" viewBox="0 0 900 380" role="img" aria-label="Pris mod km-stand"></svg>
+        </div>
+        <table id="cars-marknad">
+          <thead>
+            <tr>
+              <th data-mkey="model">Model</th>
+              <th data-mkey="heading">Annonce</th>
+              <th data-mkey="year" class="num">Årgang</th>
+              <th data-mkey="mil" class="num">Km-stand</th>
+              <th data-mkey="wltp" class="num">WLTP</th>
+              <th data-mkey="pris" class="num key">Pris (DKK)</th>
+              <th data-mkey="krPerKm" class="num">kr./km rækkevidde</th>
+              <th>Sammenlign</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p class="note">
+          Øjebliksbillede <span id="marknad-fetched"></span> fra AutoUncle.dk (aggregerer
+          Bilbasen m.fl.), første resultatside pr. model (~12 stk.) — ikke hele markedet.
+        </p>
+      </section>
+
+      <section class="controls">
+        <h2>Tjekliste før køb (Danmark)</h2>
+        <ol class="checklist">
+          <li><strong>SoH-batteritest</strong> (fx Aviloo) — kræv dokumenteret batterisundhed, vigtigst ved høj km-stand.</li>
+          <li><strong>Motorregistret (DMR)</strong> — slå bilen op: ejerhistorik, synsstatus, afgiftsforhold.</li>
+          <li><strong>Bilbogen (Tinglysning)</strong> — tjek at der ikke er pant/gæld i bilen før privatkøb.</li>
+          <li><strong>Synsrapporter</strong> — se historikken hos Trafikstyrelsen/synsbasen; afvist syn er et advarselstegn.</li>
+          <li><strong>Tilbagekaldelser</strong> — bed forhandler/mærkeværksted køre stelnummeret for åbne kampagner.</li>
+          <li><strong>Servicehistorik</strong> — batterigarantien kan være betinget af autoriseret service.</li>
+          <li><strong>Forsikringstilbud på registreringsnummer</strong> før køb — elbilpræmier varierer meget.</li>
+          <li><strong>Ladeforhold hjemme</strong> — tjek mulighed for ladeboks og elselskabets refusionsordning for elafgift.</li>
+          <li><strong>FDM-test eller uafhængigt værkstedstjek</strong> ved privatkøb — billig forsikring mod dyre fejl.</li>
+        </ol>
+        <p class="note">
+          Markedspladser: <a class="pagelink" href="https://www.bilbasen.dk" target="_blank" rel="noopener">Bilbasen</a> ·
+          <a class="pagelink" href="https://www.dba.dk/biler" target="_blank" rel="noopener">DBA</a> ·
+          <a class="pagelink" href="https://fdm.dk" target="_blank" rel="noopener">FDM (test & rådgivning)</a>
+        </p>
+      </section>
+
+      <footer class="meta">
+        <p>
+          Alle beløb i DKK. Kalkylen er vejledende: værditab + rente på bundet kapital +
+          el + forsikring + service + grøn ejerafgift. Registreringsafgift indgår ikke
+          (allerede betalt i brugtbilens pris).
+        </p>
+      </footer>
+    </main>
+    
+    <script>
+
+window.__EMBEDDED_DATA__ = {
+  "/marknad-dk.json": {
+ "fetched": "2026-07-05",
+ "market": "DK",
+ "listings": [
+  {
+   "model": "BMW iX",
+   "heading": "Brugt (2024) BMW iX Comfort Edition 523 HK",
+   "year": 2024,
+   "mil": 52000,
+   "wltp": null,
+   "pris": 419900,
+   "url": "https://www.autouncle.dk/da/d/5637514-brugt-2023-bmw-ix-sport-line-326-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "BMW iX",
+   "heading": "Brugt (2023) BMW iX 326 HK",
+   "year": 2023,
+   "mil": 30000,
+   "wltp": null,
+   "pris": 387900,
+   "url": "https://www.autouncle.dk/da/d/5771830-brugt-2022-bmw-ix-sport-line-326-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "BMW iX",
+   "heading": "Brugt (2023) BMW iX Sport Line 523 HK",
+   "year": 2023,
+   "mil": 50500,
+   "wltp": null,
+   "pris": 459800,
+   "url": "https://www.autouncle.dk/da/d/5799633-brugt-2023-bmw-ix-sport-line-326-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "BMW iX",
+   "heading": "Brugt (2023) BMW iX Sport Line 326 HK",
+   "year": 2023,
+   "mil": 75000,
+   "wltp": null,
+   "pris": 594900,
+   "url": "https://www.autouncle.dk/da/d/5511659-brugt-2023-bmw-ix-sport-line-523-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "BMW iX",
+   "heading": "Brugt (2022) BMW iX Sport Line 326 HK",
+   "year": 2022,
+   "mil": 127000,
+   "wltp": null,
+   "pris": 409900,
+   "url": "https://www.autouncle.dk/da/d/5801150-brugt-2022-bmw-ix-326-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "BMW iX",
+   "heading": "Brugt (2024) BMW iX 523 HK",
+   "year": 2024,
+   "mil": 74000,
+   "wltp": null,
+   "pris": 429900,
+   "url": "https://www.autouncle.dk/da/d/5748259-brugt-2023-bmw-ix-sport-line-326-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "BMW iX",
+   "heading": "Brugt (2024) BMW iX Comfort Edition 326 HK",
+   "year": 2024,
+   "mil": 62000,
+   "wltp": null,
+   "pris": 599000,
+   "url": "https://www.autouncle.dk/da/d/5763987-brugt-2023-bmw-ix-sport-line-523-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "BMW iX",
+   "heading": "Brugt (2023) BMW iX Sport Line 326 HK",
+   "year": 2023,
+   "mil": 33000,
+   "wltp": null,
+   "pris": 479800,
+   "url": "https://www.autouncle.dk/da/d/5791991-brugt-2023-bmw-ix-sport-line-326-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "BMW iX",
+   "heading": "Brugt (2022) BMW iX 326 HK",
+   "year": 2022,
+   "mil": 52000,
+   "wltp": null,
+   "pris": 449900,
+   "url": "https://www.autouncle.dk/da/d/5803627-brugt-2022-bmw-ix-326-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "BMW iX",
+   "heading": "Brugt (2023) BMW iX Sport Line 523 HK",
+   "year": 2023,
+   "mil": 56000,
+   "wltp": null,
+   "pris": 439800,
+   "url": "https://www.autouncle.dk/da/d/5768912-brugt-2021-bmw-ix-m-sport-326-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "Kia EV9",
+   "heading": "Brugt (2025) Kia EV9 Premium 384 HK",
+   "year": 2025,
+   "mil": 9500,
+   "wltp": null,
+   "pris": 549800,
+   "url": "https://www.autouncle.dk/da/d/5741221-brugt-2023-kia-ev9-gt-line-384-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "Kia EV9",
+   "heading": "Brugt (2024) Kia EV9 GT-Line 384 HK",
+   "year": 2024,
+   "mil": 57883,
+   "wltp": null,
+   "pris": 629700,
+   "url": "https://www.autouncle.dk/da/d/5781075-brugt-2025-kia-ev9-gt-line-385-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "Volvo EX90",
+   "heading": "Brugt (2024) Volvo EX90 Performance 517 HK",
+   "year": 2024,
+   "mil": 5000,
+   "wltp": null,
+   "pris": 739700,
+   "url": "https://www.autouncle.dk/da/d/5758144-ny-2025-volvo-ex90-plus-408-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "Volvo EX90",
+   "heading": "Brugt (2025) Volvo EX90 Performance 517 HK",
+   "year": 2025,
+   "mil": 25840,
+   "wltp": null,
+   "pris": 729900,
+   "url": "https://www.autouncle.dk/da/d/5718059-brugt-2025-volvo-ex90-plus-408-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "Volvo EX90",
+   "heading": "Brugt (2025) Volvo EX90 Performance 517 HK",
+   "year": 2025,
+   "mil": 8000,
+   "wltp": null,
+   "pris": 814900,
+   "url": "https://www.autouncle.dk/da/d/5746580-brugt-2025-volvo-ex90-performance-517-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "Volvo EX90",
+   "heading": "Brugt (2025) Volvo EX90 Plus 279 HK",
+   "year": 2025,
+   "mil": 6000,
+   "wltp": null,
+   "pris": 774000,
+   "url": "https://www.autouncle.dk/da/d/5735509-brugt-2025-volvo-ex90-ultra-408-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "Volvo EX90",
+   "heading": "Brugt (2025) Volvo EX90 Plus 333 HK",
+   "year": 2025,
+   "mil": 13000,
+   "wltp": null,
+   "pris": 814700,
+   "url": "https://www.autouncle.dk/da/d/5595362-brugt-2024-volvo-ex90-performance-517-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "Volvo EX90",
+   "heading": "Brugt (2024) Volvo EX90 Ultra 408 HK",
+   "year": 2024,
+   "mil": 23000,
+   "wltp": null,
+   "pris": 843900,
+   "url": "https://www.autouncle.dk/da/d/5627564-brugt-2025-volvo-ex90-performance-517-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "Volvo EX90",
+   "heading": "Brugt (2025) Volvo EX90 Plus 279 HK",
+   "year": 2025,
+   "mil": 7000,
+   "wltp": null,
+   "pris": 787700,
+   "url": "https://www.autouncle.dk/da/d/5625461-brugt-2025-volvo-ex90-ultra-408-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "Volvo EX90",
+   "heading": "Brugt (2025) Volvo EX90 Ultra 408 HK",
+   "year": 2025,
+   "mil": 20000,
+   "wltp": null,
+   "pris": 684700,
+   "url": "https://www.autouncle.dk/da/d/5595620-brugt-2025-volvo-ex90-plus-333-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "Polestar 3",
+   "heading": "Brugt (2024) Polestar 3 489 HK",
+   "year": 2024,
+   "mil": 20000,
+   "wltp": null,
+   "pris": 659900,
+   "url": "https://www.autouncle.dk/da/d/5394053-ny-2026-polestar-3-489-hk",
+   "segment": "stor"
+  },
+  {
+   "model": "Tesla Model Y",
+   "heading": "Brugt (2023) Tesla Model Y Long Range AWD 514 HK",
+   "year": 2023,
+   "mil": 56500,
+   "wltp": null,
+   "pris": 234900,
+   "url": "https://www.autouncle.dk/da/d/5801745-brugt-2023-tesla-model-y-rwd-320-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Tesla Model Y",
+   "heading": "Brugt (2022) Tesla Model Y Long Range AWD 514 HK",
+   "year": 2022,
+   "mil": 49100,
+   "wltp": null,
+   "pris": 269900,
+   "url": "https://www.autouncle.dk/da/d/5772870-brugt-2024-tesla-model-y-rwd-299-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Tesla Model Y",
+   "heading": "Brugt (2023) Tesla Model Y RWD 299 HK",
+   "year": 2023,
+   "mil": 116000,
+   "wltp": null,
+   "pris": 239800,
+   "url": "https://www.autouncle.dk/da/d/5797672-brugt-2023-tesla-model-y-long-range-awd-514-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Tesla Model Y",
+   "heading": "Brugt (2023) Tesla Model Y Long Range AWD 514 HK",
+   "year": 2023,
+   "mil": 49900,
+   "wltp": null,
+   "pris": 304800,
+   "url": "https://www.autouncle.dk/da/d/5785265-brugt-2023-tesla-model-y-performance-534-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Tesla Model Y",
+   "heading": "Brugt (2022) Tesla Model Y Long Range AWD 514 HK",
+   "year": 2022,
+   "mil": 153000,
+   "wltp": null,
+   "pris": 214800,
+   "url": "https://www.autouncle.dk/da/d/5781744-brugt-2021-tesla-model-y-long-range-awd-514-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Tesla Model Y",
+   "heading": "Brugt (2022) Tesla Model Y Long Range AWD 514 HK",
+   "year": 2022,
+   "mil": 96000,
+   "wltp": null,
+   "pris": 279900,
+   "url": "https://www.autouncle.dk/da/d/5272167-brugt-2022-tesla-model-y-performance-534-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Tesla Model Y",
+   "heading": "Brugt (2024) Tesla Model Y Long Range RWD 340 HK",
+   "year": 2024,
+   "mil": 76000,
+   "wltp": null,
+   "pris": 239800,
+   "url": "https://www.autouncle.dk/da/d/5792950-brugt-2021-tesla-model-y-long-range-awd-514-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Tesla Model Y",
+   "heading": "Brugt (2022) Tesla Model Y Performance 534 HK",
+   "year": 2022,
+   "mil": 23000,
+   "wltp": null,
+   "pris": 289900,
+   "url": "https://www.autouncle.dk/da/d/5784335-brugt-2022-tesla-model-y-performance-534-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Tesla Model Y",
+   "heading": "Brugt (2023) Tesla Model Y Long Range AWD 514 HK",
+   "year": 2023,
+   "mil": 65500,
+   "wltp": null,
+   "pris": 214900,
+   "url": "https://www.autouncle.dk/da/d/5582942-brugt-2021-tesla-model-y-long-range-awd-514-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Tesla Model Y",
+   "heading": "Brugt (2023) Tesla Model Y RWD 299 HK",
+   "year": 2023,
+   "mil": 80000,
+   "wltp": null,
+   "pris": 239900,
+   "url": "https://www.autouncle.dk/da/d/5789170-brugt-2021-tesla-model-y-long-range-awd-514-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Tesla Model Y",
+   "heading": "Brugt (2023) Tesla Model Y Performance 534 HK",
+   "year": 2023,
+   "mil": 59000,
+   "wltp": null,
+   "pris": 267995,
+   "url": "https://www.autouncle.dk/da/d/5802790-brugt-2023-tesla-model-y-rwd-299-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Tesla Model Y",
+   "heading": "Brugt (2022) Tesla Model Y Performance 534 HK",
+   "year": 2022,
+   "mil": 108000,
+   "wltp": null,
+   "pris": 224900,
+   "url": "https://www.autouncle.dk/da/d/5801761-brugt-2023-tesla-model-y-long-range-awd-514-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Audi Q4",
+   "heading": "Brugt (2023) Audi Q4 e-tron 204 HK",
+   "year": 2023,
+   "mil": 35200,
+   "wltp": null,
+   "pris": 279900,
+   "url": "https://www.autouncle.dk/da/d/5784423-brugt-2021-audi-q4-e-tron-edition-1-299-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Audi Q4",
+   "heading": "Brugt (2024) Audi Q4 e-tron S-Line 286 HK",
+   "year": 2024,
+   "mil": 25000,
+   "wltp": null,
+   "pris": 294800,
+   "url": "https://www.autouncle.dk/da/d/5791970-brugt-2024-audi-q4-e-tron-advanced-286-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Audi Q4",
+   "heading": "Brugt (2024) Audi Q4 e-tron Advanced 286 HK",
+   "year": 2024,
+   "mil": 61000,
+   "wltp": null,
+   "pris": 269800,
+   "url": "https://www.autouncle.dk/da/d/5754188-brugt-2024-audi-q4-e-tron-advanced-286-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Audi Q4",
+   "heading": "Brugt (2024) Audi Q4 e-tron S-Line 286 HK",
+   "year": 2024,
+   "mil": 26000,
+   "wltp": null,
+   "pris": 274900,
+   "url": "https://www.autouncle.dk/da/d/5750131-brugt-2024-audi-q4-e-tron-advanced-286-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Audi Q4",
+   "heading": "Brugt (2022) Audi Q4 e-tron 204 HK",
+   "year": 2022,
+   "mil": 42890,
+   "wltp": null,
+   "pris": 224800,
+   "url": "https://www.autouncle.dk/da/d/5697772-brugt-2021-audi-q4-e-tron-s-line-204-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Audi Q4",
+   "heading": "Brugt (2022) Audi Q4 e-tron S-Line 204 HK",
+   "year": 2022,
+   "mil": 48000,
+   "wltp": null,
+   "pris": 204900,
+   "url": "https://www.autouncle.dk/da/d/5687142-brugt-2022-audi-q4-e-tron-204-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Audi Q4",
+   "heading": "Brugt (2022) Audi Q4 e-tron S-Line 204 HK",
+   "year": 2022,
+   "mil": 55000,
+   "wltp": null,
+   "pris": 184900,
+   "url": "https://www.autouncle.dk/da/d/5200216-brugt-2022-audi-q4-e-tron-170-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Audi Q4",
+   "heading": "Brugt (2022) Audi Q4 e-tron Comfort 204 HK",
+   "year": 2022,
+   "mil": 31000,
+   "wltp": null,
+   "pris": 204900,
+   "url": "https://www.autouncle.dk/da/d/5629738-brugt-2022-audi-q4-e-tron-204-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Audi Q4",
+   "heading": "Brugt (2023) Audi Q4 e-tron 204 HK",
+   "year": 2023,
+   "mil": 70000,
+   "wltp": null,
+   "pris": 309900,
+   "url": "https://www.autouncle.dk/da/d/5789309-brugt-2024-audi-q4-e-tron-286-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Audi Q4",
+   "heading": "Brugt (2022) Audi Q4 e-tron 204 HK",
+   "year": 2022,
+   "mil": 59000,
+   "wltp": null,
+   "pris": 299900,
+   "url": "https://www.autouncle.dk/da/d/5782028-brugt-2024-audi-q4-e-tron-265-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Audi Q6",
+   "heading": "Brugt (2024) Audi Q6 e-tron Performance 306 HK",
+   "year": 2024,
+   "mil": 9000,
+   "wltp": null,
+   "pris": 489900,
+   "url": "https://www.autouncle.dk/da/d/5717563-brugt-2024-audi-q6-e-tron-performance-306-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Audi Q6",
+   "heading": "Brugt (2026) Audi Q6 e-tron S-line plus 306 HK",
+   "year": 2026,
+   "mil": 15000,
+   "wltp": null,
+   "pris": 599900,
+   "url": "https://www.autouncle.dk/da/d/5794245-brugt-2026-audi-q6-e-tron-s-line-plus-306-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Audi Q6",
+   "heading": "Brugt (2025) Audi Q6 e-tron Performance 306 HK",
+   "year": 2025,
+   "mil": 11000,
+   "wltp": null,
+   "pris": 599900,
+   "url": "https://www.autouncle.dk/da/d/5779875-brugt-2024-audi-q6-e-tron-388-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Audi Q6",
+   "heading": "Brugt (2025) Audi Q6 e-tron 388 HK",
+   "year": 2025,
+   "mil": 4000,
+   "wltp": null,
+   "pris": 534900,
+   "url": "https://www.autouncle.dk/da/d/5759454-brugt-2024-audi-q6-e-tron-performance-306-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Audi Q6",
+   "heading": "Brugt (2026) Audi Q6 e-tron S-line plus 306 HK",
+   "year": 2026,
+   "mil": 10000,
+   "wltp": null,
+   "pris": 589900,
+   "url": "https://www.autouncle.dk/da/d/5680425-brugt-2025-audi-q6-e-tron-388-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Audi Q6",
+   "heading": "Brugt (2025) Audi Q6 e-tron Performance 306 HK",
+   "year": 2025,
+   "mil": 8000,
+   "wltp": null,
+   "pris": 529800,
+   "url": "https://www.autouncle.dk/da/d/5737100-brugt-2025-audi-q6-e-tron-388-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Audi Q6",
+   "heading": "Brugt (2025) Audi Q6 e-tron Performance 306 HK",
+   "year": 2025,
+   "mil": 30000,
+   "wltp": null,
+   "pris": 549900,
+   "url": "https://www.autouncle.dk/da/d/5788443-brugt-2024-audi-q6-e-tron-performance-306-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Audi Q6",
+   "heading": "Brugt (2025) Audi Q6 e-tron Performance 306 HK",
+   "year": 2025,
+   "mil": 24000,
+   "wltp": null,
+   "pris": 559900,
+   "url": "https://www.autouncle.dk/da/d/5380773-brugt-2024-audi-q6-e-tron-performance-306-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Audi Q6",
+   "heading": "Brugt (2025) Audi Q6 e-tron Performance 306 HK",
+   "year": 2025,
+   "mil": 6000,
+   "wltp": null,
+   "pris": 609900,
+   "url": "https://www.autouncle.dk/da/d/5779070-brugt-2024-audi-q6-e-tron-388-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Audi Q6",
+   "heading": "Brugt (2025) Audi Q6 e-tron 388 HK",
+   "year": 2025,
+   "mil": 37000,
+   "wltp": null,
+   "pris": 564900,
+   "url": "https://www.autouncle.dk/da/d/5443713-brugt-2025-audi-q6-e-tron-performance-306-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Audi Q6",
+   "heading": "Brugt (2026) Audi Q6 e-tron S-line plus 306 HK",
+   "year": 2026,
+   "mil": 10000,
+   "wltp": null,
+   "pris": 584900,
+   "url": "https://www.autouncle.dk/da/d/5740241-ny-2025-audi-q6-e-tron-performance-306-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Audi Q6",
+   "heading": "Brugt (2025) Audi Q6 e-tron Performance 306 HK",
+   "year": 2025,
+   "mil": 16000,
+   "wltp": null,
+   "pris": 549900,
+   "url": "https://www.autouncle.dk/da/d/5400261-brugt-2025-audi-q6-e-tron-performance-306-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Volvo EX40",
+   "heading": "Brugt (2026) Volvo EX40 252 HK",
+   "year": 2026,
+   "mil": 6000,
+   "wltp": null,
+   "pris": 359900,
+   "url": "https://www.autouncle.dk/da/d/5766901-brugt-2026-volvo-ex40-252-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Volvo EX40",
+   "heading": "Brugt (2025) Volvo EX40 252 HK",
+   "year": 2025,
+   "mil": 7000,
+   "wltp": null,
+   "pris": 354900,
+   "url": "https://www.autouncle.dk/da/d/5585481-brugt-2024-volvo-ex40-performance-442-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Volvo EX40",
+   "heading": "Brugt (2024) Volvo EX40 Core 252 HK",
+   "year": 2024,
+   "mil": 45790,
+   "wltp": null,
+   "pris": 329700,
+   "url": "https://www.autouncle.dk/da/d/5745407-brugt-2024-volvo-ex40-core-252-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Volvo EX40",
+   "heading": "Brugt (2025) Volvo EX40 Core 252 HK",
+   "year": 2025,
+   "mil": 4000,
+   "wltp": null,
+   "pris": 349900,
+   "url": "https://www.autouncle.dk/da/d/5802770-brugt-2024-volvo-ex40-ultra-252-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Volvo EX40",
+   "heading": "Brugt (2024) Volvo EX40 Core 252 HK",
+   "year": 2024,
+   "mil": 30000,
+   "wltp": null,
+   "pris": 319900,
+   "url": "https://www.autouncle.dk/da/d/5791956-brugt-2024-volvo-ex40-core-252-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Volvo EX40",
+   "heading": "Brugt (2025) Volvo EX40 Plus 252 HK",
+   "year": 2025,
+   "mil": 18500,
+   "wltp": null,
+   "pris": 329900,
+   "url": "https://www.autouncle.dk/da/d/5791949-brugt-2025-volvo-ex40-plus-252-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Volvo EX40",
+   "heading": "Brugt (2024) Volvo EX40 Plus 252 HK",
+   "year": 2024,
+   "mil": 8300,
+   "wltp": null,
+   "pris": 374900,
+   "url": "https://www.autouncle.dk/da/d/5803589-brugt-2026-volvo-ex40-252-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Volvo EX40",
+   "heading": "Brugt (2025) Volvo EX40 Plus 252 HK",
+   "year": 2025,
+   "mil": 18000,
+   "wltp": null,
+   "pris": 344900,
+   "url": "https://www.autouncle.dk/da/d/5781039-brugt-2025-volvo-ex40-plus-252-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Volvo EX40",
+   "heading": "Brugt (2025) Volvo EX40 Plus 252 HK",
+   "year": 2025,
+   "mil": 11000,
+   "wltp": null,
+   "pris": 349900,
+   "url": "https://www.autouncle.dk/da/d/5791998-brugt-2025-volvo-ex40-plus-252-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Volvo EX40",
+   "heading": "Brugt (2025) Volvo EX40 252 HK",
+   "year": 2025,
+   "mil": 18000,
+   "wltp": null,
+   "pris": 344900,
+   "url": "https://www.autouncle.dk/da/d/5786478-brugt-2025-volvo-ex40-plus-252-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Volvo EX40",
+   "heading": "Brugt (2025) Volvo EX40 Plus 252 HK",
+   "year": 2025,
+   "mil": 11000,
+   "wltp": null,
+   "pris": 349900,
+   "url": "https://www.autouncle.dk/da/d/5781035-brugt-2025-volvo-ex40-plus-252-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "Volvo EX40",
+   "heading": "Brugt (2025) Volvo EX40 Plus 252 HK",
+   "year": 2025,
+   "mil": 6000,
+   "wltp": null,
+   "pris": 329900,
+   "url": "https://www.autouncle.dk/da/d/5785195-brugt-2025-volvo-ex40-plus-252-hk",
+   "segment": "kompakt"
+  },
+  {
+   "model": "BMW iX3",
+   "heading": "Brugt (2023) BMW iX3 M Sport 286 HK",
+   "year": 2023,
+   "mil": 41662,
+   "wltp": null,
+   "pris": 324000,
+   "url": "https://www.autouncle.dk/da/d/5802807-brugt-2022-bmw-ix3-m-sport-286-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "BMW iX3",
+   "heading": "Brugt (2022) BMW iX3 Impressive 286 HK",
+   "year": 2022,
+   "mil": 107000,
+   "wltp": null,
+   "pris": 309900,
+   "url": "https://www.autouncle.dk/da/d/5786796-brugt-2022-bmw-ix3-m-sport-286-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "BMW iX3",
+   "heading": "Brugt (2022) BMW iX3 M Sport 286 HK",
+   "year": 2022,
+   "mil": 87200,
+   "wltp": null,
+   "pris": 254900,
+   "url": "https://www.autouncle.dk/da/d/5751715-brugt-2022-bmw-ix3-286-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "BMW iX3",
+   "heading": "Brugt (2023) BMW iX3 M Sport 286 HK",
+   "year": 2023,
+   "mil": 58000,
+   "wltp": null,
+   "pris": 394900,
+   "url": "https://www.autouncle.dk/da/d/5781902-brugt-2024-bmw-ix3-m-sport-286-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "BMW iX3",
+   "heading": "Brugt (2024) BMW iX3 M Sport 286 HK",
+   "year": 2024,
+   "mil": 30000,
+   "wltp": null,
+   "pris": 369900,
+   "url": "https://www.autouncle.dk/da/d/5784505-brugt-2023-bmw-ix3-m-sport-286-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "BMW iX3",
+   "heading": "Brugt (2022) BMW iX3 M Sport 286 HK",
+   "year": 2022,
+   "mil": 46000,
+   "wltp": null,
+   "pris": 334000,
+   "url": "https://www.autouncle.dk/da/d/5802806-brugt-2023-bmw-ix3-m-sport-286-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "BMW iX3",
+   "heading": "Brugt (2023) BMW iX3 M Sport 286 HK",
+   "year": 2023,
+   "mil": 45000,
+   "wltp": null,
+   "pris": 397700,
+   "url": "https://www.autouncle.dk/da/d/5790289-brugt-2024-bmw-ix3-m-sport-286-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "BMW iX3",
+   "heading": "Brugt (2023) BMW iX3 M Sport 286 HK",
+   "year": 2023,
+   "mil": 50000,
+   "wltp": null,
+   "pris": 379800,
+   "url": "https://www.autouncle.dk/da/d/5772603-brugt-2023-bmw-ix3-m-sport-286-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "BMW iX3",
+   "heading": "Brugt (2023) BMW iX3 M Sport 286 HK",
+   "year": 2023,
+   "mil": 27000,
+   "wltp": null,
+   "pris": 387700,
+   "url": "https://www.autouncle.dk/da/d/5766842-brugt-2023-bmw-ix3-m-sport-286-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "BMW iX3",
+   "heading": "Brugt (2023) BMW iX3 M Sport 286 HK",
+   "year": 2023,
+   "mil": 79000,
+   "wltp": null,
+   "pris": 374900,
+   "url": "https://www.autouncle.dk/da/d/5794792-brugt-2024-bmw-ix3-m-sport-286-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Polestar 4",
+   "heading": "Brugt (2025) Polestar 4 Long Range Dual motor 544 HK",
+   "year": 2025,
+   "mil": 32520,
+   "wltp": null,
+   "pris": 439700,
+   "url": "https://www.autouncle.dk/da/d/5595605-brugt-2024-polestar-4-long-range-dual-motor-544-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Polestar 4",
+   "heading": "Brugt (2025) Polestar 4 544 HK",
+   "year": 2025,
+   "mil": 18000,
+   "wltp": null,
+   "pris": 369900,
+   "url": "https://www.autouncle.dk/da/d/5796953-brugt-2025-polestar-4-272-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Polestar 4",
+   "heading": "Brugt (2024) Polestar 4 Pilot 272 HK",
+   "year": 2024,
+   "mil": 13000,
+   "wltp": null,
+   "pris": 394900,
+   "url": "https://www.autouncle.dk/da/d/5799681-brugt-2025-polestar-4-272-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Polestar 4",
+   "heading": "Brugt (2025) Polestar 4 272 HK",
+   "year": 2025,
+   "mil": 14000,
+   "wltp": null,
+   "pris": 439900,
+   "url": "https://www.autouncle.dk/da/d/5699008-brugt-2025-polestar-4-544-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Polestar 4",
+   "heading": "Brugt (2025) Polestar 4 544 HK",
+   "year": 2025,
+   "mil": 7500,
+   "wltp": null,
+   "pris": 394000,
+   "url": "https://www.autouncle.dk/da/d/5800503-brugt-2025-polestar-4-272-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Polestar 4",
+   "heading": "Brugt (2025) Polestar 4 272 HK",
+   "year": 2025,
+   "mil": 2500,
+   "wltp": null,
+   "pris": 389000,
+   "url": "https://www.autouncle.dk/da/d/5798919-brugt-2025-polestar-4-272-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Polestar 4",
+   "heading": "Brugt (2025) Polestar 4 Performance 544 HK",
+   "year": 2025,
+   "mil": 15000,
+   "wltp": null,
+   "pris": 499900,
+   "url": "https://www.autouncle.dk/da/d/5796862-brugt-2025-polestar-4-performance-544-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Polestar 4",
+   "heading": "Brugt (2026) Polestar 4 544 HK",
+   "year": 2026,
+   "mil": 12000,
+   "wltp": null,
+   "pris": 499900,
+   "url": "https://www.autouncle.dk/da/d/5394055-ny-2026-polestar-4-272-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Polestar 4",
+   "heading": "Brugt (2026) Polestar 4 272 HK",
+   "year": 2026,
+   "mil": 13000,
+   "wltp": null,
+   "pris": 469900,
+   "url": "https://www.autouncle.dk/da/d/5787246-brugt-2025-polestar-4-544-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Polestar 4",
+   "heading": "Brugt (2025) Polestar 4 272 HK",
+   "year": 2025,
+   "mil": 11740,
+   "wltp": null,
+   "pris": 469900,
+   "url": "https://www.autouncle.dk/da/d/5718343-brugt-2026-polestar-4-544-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Polestar 4",
+   "heading": "Brugt (2024) Polestar 4 544 HK",
+   "year": 2024,
+   "mil": 64000,
+   "wltp": null,
+   "pris": 449500,
+   "url": "https://www.autouncle.dk/da/d/5767716-brugt-2025-polestar-4-544-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Porsche Macan EV",
+   "heading": "Brugt (2025) Porsche Macan 340 HK",
+   "year": 2025,
+   "mil": 17000,
+   "wltp": null,
+   "pris": 869900,
+   "url": "https://www.autouncle.dk/da/d/5742110-brugt-2025-porsche-macan-387-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Porsche Macan EV",
+   "heading": "Brugt (2024) Porsche Macan 387 HK",
+   "year": 2024,
+   "mil": 26000,
+   "wltp": null,
+   "pris": 819800,
+   "url": "https://www.autouncle.dk/da/d/5801049-brugt-2025-porsche-macan-387-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Porsche Macan EV",
+   "heading": "Brugt (2025) Porsche Macan 340 HK",
+   "year": 2025,
+   "mil": 18000,
+   "wltp": null,
+   "pris": 669000,
+   "url": "https://www.autouncle.dk/da/d/5643177-brugt-2024-porsche-macan-340-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Porsche Macan EV",
+   "heading": "Brugt (2024) Porsche Macan 340 HK",
+   "year": 2024,
+   "mil": 39000,
+   "wltp": null,
+   "pris": 849800,
+   "url": "https://www.autouncle.dk/da/d/5788366-brugt-2024-porsche-macan-387-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Porsche Macan EV",
+   "heading": "Brugt (2024) Porsche Macan 387 HK",
+   "year": 2024,
+   "mil": 67000,
+   "wltp": null,
+   "pris": 699900,
+   "url": "https://www.autouncle.dk/da/d/5608361-brugt-2024-porsche-macan-387-hk",
+   "segment": "mellan"
+  },
+  {
+   "model": "Porsche Macan EV",
+   "heading": "Brugt (2024) Porsche Macan 387 HK",
+   "year": 2024,
+   "mil": 49000,
+   "wltp": null,
+   "pris": 700000,
+   "url": "https://www.autouncle.dk/da/d/5664470-brugt-2026-porsche-macan-408-hk",
+   "segment": "mellan"
+  }
+ ]
+},
+  "/recensioner.json": {
+  "fetched": "2026-07-05",
+  "kalla": "docs/recensioner.md — 5 research-agenter, källstyrka graderad där",
+  "modeller": [
+    {
+      "match": ["q8"],
+      "namn": "Audi Q8 e-tron",
+      "betyg": "AMS: Årets testbil 2023 (55:an) · Auto Express 4/5 · FDM 4/5 · Consumer Reports (USA): svag tillförlitlighet — öppen motbild",
+      "styrkor": ["Komfort/tystnad i klassens topp", "Lång räckvidd + ovanligt platt laddkurva", "Euro NCAP 5★ / IIHS Top Safety Pick+"],
+      "svagheter": ["Tung (~2,5 t) — energieffektivitet under rivalerna", "Motorljud vid acceleration (FDM)", "Virtuella sidospeglar opraktiska (dyrt tillval)"],
+      "fel": ["Kylvätske-servicepunkt (elmotorns läckage): Audi säger 'kontrollera vid behov'; en köpguide anger 3 000 mil men okällt — bekräfta intervall med verkstad", "Fukt-recalls: kör VIN hos Audi", "USA-rapporter: 12V-urladdning, bromsslitage, MMI-strul (ej bekräftat EU)"],
+      "not": "Auto Express rekommenderar 55:an för långresor; undvik stora fälgar för räckvidden."
+    },
+    {
+      "match": ["ix3"],
+      "namn": "BMW iX3 (G08, 2021–2024)",
+      "betyg": "Top Gear 8/10 · What Car? tillförlitlighet över snittet (90,5 % MOT vs 82 %) · Autocar: 'drives like a BMW should'",
+      "styrkor": ["Körkänsla + precis styrning (bakhjulsdrift gör rattkänslan oberörd)", "Effektiv i test (Vi Bilägare: 13,3 kWh/100 km)", "Solid tillförlitlighet — 'få klagomål'"],
+      "svagheter": ["Endast bakhjulsdrift — ingen AWD-variant fanns någonsin (Wayke: 'stora hindret')", "Bara 150 kW DC-laddning (branschsnitt 2026 klart högre)", "Räckvidd 458 km WLTP — under nyare konkurrenter"],
+      "fel": ["Mindre iDrive7-buggar (svart skärm, omstart) — ofta OTA-fixade", "Enstaka 12V-batterifel (normalt EV-mönster)", "Tidig produktion 2020–21: drivlinedebris-varningar (single-source, verifiera VIN)"],
+      "not": "Obs: nya Neue Klasse iX3 (2026) är helt annan bil (805 km WLTP, 400 kW, AWD). G08 är begagnatvalet om AWD inte krävs och budget avgör."
+    },
+    {
+      "match": ["ix"],
+      "namn": "BMW iX",
+      "betyg": "What Car? tillförlitlighet: 81 %, plats 25/27 · amuts 100 000 km-test: godkänt · InsideEVs långtest: över EPA-räckvidd",
+      "styrkor": ["Enastående komfort/tystnad (3 oberoende källor)", "Verklig räckvidd över WLTP/EPA (xDrive50)", "Stark, jämn laddkurva"],
+      "svagheter": ["Vinter: −15–30 % räckvidd", "xDrive40 för klen för svenska vintrar (150 kW, litet batteri) — välj xDrive50", "Tillförlitlighet under klassnittet (What Car?)"],
+      "fel": ["Batterimodul-recalls rapporterade — verifiera mot Transportstyrelsen", "Enstaka 12V-dödlägen", "Karossknarr (amuts långtest)"],
+      "not": "Ny Tekniks direktjämförelse mot Q8 e-tron ligger bakom betalvägg — vinnare okänd."
+    },
+    {
+      "match": ["eqe"],
+      "namn": "Mercedes EQE SUV",
+      "betyg": "Edmunds 8,1/10 · Top Gear 7/10 · M3.se: 'som att sväva på luft'",
+      "styrkor": ["Klassledande åkkomfort", "Mycket bra assistanssystem", "Tyst, välbyggd kabin"],
+      "svagheter": ["DC-laddning max 170 kW", "'Inte inspirerande att köra' (Edmunds)", "Vinterräckvidd 300–400 km — under förväntan"],
+      "fel": ["Mjukvarugrodor/12V-byten/sensorfel över snittet (ägarrapporter)", "Bromspedalskänsla återkommande klagomål tidiga årsmodeller"],
+      "not": "Det trygga men trista valet enligt samlad recensionsbild."
+    },
+    {
+      "match": ["polestar 4"],
+      "namn": "Polestar 4",
+      "betyg": "Vi Bilägare + Autocar + Top Gear: 'world-class bitvis' · InsideEVs: 'Flawed But Charming' · Carup: 'världsklass bitvis'",
+      "styrkor": ["Enorm baksätesrymd (takbågen flyttad utan bakruta) — 'flygplanskabin'-känsla", "Komfort/tystnad även på 22\"-fälgar", "0–100 på 3,8 s i Dual Motor (544 hk)"],
+      "svagheter": ["Bakrutefrågan kontroversiell: M3 + The Driven rapporterar anpassningsproblem, ett fall åksjuka", "Mjukvara som beta vid lansering — samma Polestar 3-mönster", "Styrning mindre kommunikativ än Polestar 3 (Carup)"],
+      "fel": ["Top Gear långtest: fel hastighetsskyltavläsning (30 mph vid 70+), utlovad V2L saknas fortfarande", "Ägarforum: värme i säte/ratt svarar 70 % av tiden, skärmar slocknar, Spotify kraschar", "Skärmen = din enda backspegel — garanti/kostnad vid haveri oklart"],
+      "not": "Byggd i Kina (Geely) — 20 % EU-tull tillkommer. Garanti 8 år/160 000 km oberoende av tillverkningsland. Reservdelstillgång i Norden oklar (Top Gear: 7 v väntetid i UK)."
+    },
+    {
+      "match": ["polestar 3", "polestar"],
+      "namn": "Polestar 3",
+      "betyg": "Elbilen 5/5 · InsideEVs: bäst körupplevelse bland prestanda-SUV:ar · Edmunds ägarbetyg bara 3/5 — notera gapet",
+      "styrkor": ["Körupplevelsen hyllas brett (svenska + internationella tester)", "Komfort med luftfjädring", "Rymlig, exklusiv kabin"],
+      "svagheter": ["Mjukvaruhistorik: bekräftat allvarliga lanseringsbuggar hösten 2024", "Minimalistiska reglage ifrågasatta"],
+      "fel": ["Leveransstopp 2024 pga mjukvara; döda skärmar i test", "2025-recalls: baksätesryggstöd (säkerhet), backkamera, panoramatak", "Kräv att gratis Nvidia Orin-uppgraderingen är utförd"],
+      "not": "Klart bättre 2025–26 efter uppdateringar, men kontrollera bilens mjukvaruhistorik."
+    },
+    {
+      "match": ["ev9"],
+      "namn": "Kia EV9",
+      "betyg": "Edmunds Top Rated EV-SUV 2024 & 2025 · Consumer Reports: under snittet — öppen motsägelse",
+      "styrkor": ["Bäst familjelogik: 3,1 m hjulbas, vuxenduglig 3:e rad", "Vinter: bara ~12,5 % tapp (norskt test — bäst i klassen)", "800V: 10–80 % på 24 min"],
+      "svagheter": ["Släpdrag kostar 40–55 % räckvidd", "Byggkvalitet/drivlina flaggad av CR"],
+      "fel": ["Recalls: sätesbultar, bakre växeldrivenhet (GDU), instrumentpanel", "ICCU-problem — känt Hyundai/Kia-mönster"],
+      "not": "Edmunds egen långtidsbil var 'bulletproof' — ägarbilden är splittrad."
+    },
+    {
+      "match": ["ex90"],
+      "namn": "Volvo EX90",
+      "betyg": "Autocar: 'Made of the right stuff' men motiverar inte priset · Consumer Reports: rekommenderar att VÄNTA",
+      "styrkor": ["Tyst, komfortabel", "Lidar + stark säkerhetsteknik (2025+)", "7-sits med riktig plats"],
+      "svagheter": ["Mjukvaran mognar fortfarande — CR avråder ännu", "Näst sämst i älgtestet (COTY DK, 64 km/h)", "Hög förbrukning, räckvidd under förväntan"],
+      "fel": ["Lanseringsproblem: digitala nycklar, svarta skärmar, krafttapp, AC", "Gratis Nvidia Orin-uppgradering — kontrollera att den är gjord", "US-recall: bakluckans mekanism (2025)"],
+      "not": "2024/2025-bilar är det mest problemtyngda skedet — uppgraderingen mildrar men löser inte allt."
+    },
+    {
+      "match": ["ex40", "xc40"],
+      "namn": "Volvo EX40 / XC40 Recharge",
+      "betyg": "Top Gear + Autocar: en av de mer premiumkänsliga i klassen · Elbilen.se: tidiga 2020 'Aj då...' → senare 'ett lyft på många punkter'",
+      "styrkor": ["Interiör/materialkänsla klassledande (behåller fysiska reglage)", "'Beautifully damped ride' — Autocar", "Twin Motor: äkta elektrisk 4WD, 0–100 på 4,6 s"],
+      "svagheter": ["Tidiga bilar (2021–22): dåligt Android Automotive utan CarPlay/Auto", "Hög förbrukning + begränsad laddeffekt på långresor (tidiga)", "Twin Motor: prispremie ~130 tkr, kortare räckvidd än Single"],
+      "fel": ["Recall BECM 2021–22 (mjukvara — verifiera utförd)", "12V-batteri töms av OTA-bakgrundsvakning", "Bromsrost pga regenerativ bromsning (fuktigt klimat)", "Enstaka: mittendisplay-krasch, AC-kompressorfel med lång ledtid"],
+      "not": "Tydlig före/efter-linje: 2021–22 med brister, 2023+ (uppdaterad mjukvara/Google-OS) betydligt bättre. Kontrollera värmepump — saknas på tidiga bilar och sänker vinterräckvidden märkbart. Single Motor är vanligen den rimliga begagnataffären utom i Norrland."
+    },
+    {
+      "match": ["model y", "tesla"],
+      "namn": "Tesla Model Y",
+      "betyg": "CR tillförlitlighet 28/100 (2023) → 41/100 (2024) — ändå bästa EV-märket hos CR",
+      "styrkor": ["Supercharger-nätet (öppet för alla) — segmentets bästa laddvardag", "Hög effektivitet, låg batteridegradering", "Sportig körkänsla"],
+      "svagheter": ["Byggkvalitet/passform — svensk ägarkritik (dörrar, lack)", "Vinter: −20–40 % på korta resor", "Stel fjädring"],
+      "fel": ["Felen är främst mjukvara/karossdetaljer — inte drivlina/batteri", "15 recalls 2023, många OTA-lösta"],
+      "not": "Berlin-byggda (2023+) klart bättre passform än tidiga bilar."
+    },
+    {
+      "match": ["q4"],
+      "namn": "Audi Q4 e-tron",
+      "betyg": "Samstämmigt: 'kompetent men inte enastående' (Edmunds, GCR, The Drive)",
+      "styrkor": ["Välbyggd, premiumkänslig interiör", "Q7-likt baksätesutrymme (MEB)", "Smidig i stan, tight svängradie"],
+      "svagheter": ["Anonym design", "Räckvidd/pris imponerar inte", "Vinter: −25–35 %"],
+      "fel": ["Infotainment dominerande klagomål (frysningar, CarPlay-tapp)", "Recall 2025: N-läges-visning (rullrisk) — verifiera utförd", "Intermittenta AC-fel 2023–24"],
+      "not": "Trygg men oinspirerande — Model Y ger mer räckvidd per krona."
+    },
+    {
+      "match": ["q6"],
+      "namn": "Audi Q6 e-tron",
+      "betyg": "Vi Bilägare: 'bra prestanda och lång räckvidd' · InsideEVs: mellan Q4 (för liten) och Q8 (för stor)",
+      "styrkor": ["800V/PPE: 270–284 kW, 10–80 % på ~21 min", "Upp till 625 km WLTP", "Nyaste tekniken i Audi-familjen"],
+      "svagheter": ["Dyr begagnad (deprecieringen ej påbörjad)", "Bagage 526 l — mindre än Q8:s 631 l", "Tunn tillförlitlighetshistorik (ny plattform)"],
+      "fel": ["3 US-recalls 2025: backkamera ×2, barnstolslås (ALR)", "Splittrade ägarröster: många felfria, några med elektronikstrul"],
+      "not": "Teknikmässigt ett generationssteg före Q8 — du betalar ~300 tkr för det."
+    },
+    {
+      "match": ["macan"],
+      "namn": "Porsche Macan Electric",
+      "betyg": "Top Gear: 'best-in-class' · Autocar: bästa körkänslan i klassen · Allt om Elbil: 'oslagbar'",
+      "styrkor": ["Körkänsla/styrning konsekvent hyllad — 'precise' där Q6 är 'lazier'", "800V/PPE: 270 kW, 10–80 % på 21 min", "InsideEVs highway-test: översteg t.o.m. EPA-räckvidden (ovanligt)"],
+      "svagheter": ["Betydligt dyrare än Audi Q6 (samma plattform) — Q6 har mer effekt på pappret", "Vinter: −30–40 % räckvidd konsekvent över källor (svenskt test: 24,8 kWh/100 km vid −5 °C, 80 km/h)", "Macan 4:s gasrespons inte 'Porsche-skarp' enligt Autocar"],
+      "fel": ["Backkamera-recall: 8 500+ bilar MY2024–25 (svart/suddig bild vid backning)", "Mjukvarubarnsjukdomar: infotainmentfrys, laddningsbugg, PCM-krascher", "Bilar 'wakes up' inkorrekt — enstaka men samstämmigt rapporterat på tre forum"],
+      "not": "Delar PPE med Audi Q6 — mjukvaruproblemen är sannolikt delvis delade men ej styrkt. Q6 vinner på TCO/garanti (3 år/30 tkm vs Porsches 1 år/10 tkm), Macan vinner på körkänsla/prestige. Fossil-Macan utgick i EU våren 2024 — begagnat handlar bara om elversionen."
+    }
+  ]
+}
+
+};
+const __origFetch = window.fetch.bind(window);
+window.fetch = (url, opts) => {
+  const key = typeof url === "string" ? url : url.url;
+  if (window.__EMBEDDED_DATA__[key]) {
+    return Promise.resolve(new Response(JSON.stringify(window.__EMBEDDED_DATA__[key]), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    }));
+  }
+  return __origFetch(url, opts);
+};
+
+"use strict";(()=>{var N={stor:"Stor SUV",mellan:"Mellanklass",kompakt:"Kompakt"},L={"Audi Q8 50":"#4cc38a","Audi Q8 55":"#2bb3c0","BMW iX":"#7c8cf8","Polestar 3":"#f2a65a","Mercedes EQE SUV":"#e57fb3","Kia EV9":"#d9d96a","Volvo EX90":"#b48cf2","Audi Q6":"#37c978","Porsche Macan EV":"#c9a227","Polestar 4":"#e37b3e","Tesla Model Y":"#e0654a","BMW iX3":"#4a5cd0","Audi Q4":"#8fd14f","Volvo EX40":"#9a6fe0"},E=new Intl.NumberFormat("sv-SE",{maximumFractionDigits:0}),A=e=>`${E.format(Math.round(e))} kr`;function w(e){let t=document.querySelector(e);if(!t)throw new Error(`missing element: ${e}`);return t}var s={rows:[],fetched:"",activeModels:new Set,only2024:!0,sortKey:"pris",sortDir:"ascending",onCompare:void 0,unit:"mil"};function B(e){return e.wltp?e.pris/e.wltp:null}function _(){return s.rows.filter(e=>s.activeModels.has(e.model)&&(!s.only2024||e.year===2024))}function R(e,t){if(t==="krPerKm")return B(e);let a=e[t];return a===void 0?null:a}function D(e){let t=w("#scatter"),a=900,r=380,o={l:70,r:20,t:16,b:42};if(!e.length){t.innerHTML="";return}let c=e.map(i=>i.mil),d=e.map(i=>i.pris),n=Math.max(...c)*1.05,l=Math.min(...d)*.95,u=Math.max(...d)*1.03,f=i=>o.l+i/n*(a-o.l-o.r),v=i=>r-o.b-(i-l)/(u-l)*(r-o.t-o.b),k="";for(let i=0;i<=4;i++){let $=l+(u-l)*i/4;k+=`<line x1="${o.l}" x2="${a-o.r}" y1="${v($)}" y2="${v($)}" stroke="var(--line)" stroke-width="1"/>`,k+=`<text x="${o.l-8}" y="${v($)+4}" text-anchor="end" class="ax">${Math.round($/1e3)} tkr</text>`}for(let i=0;i<=5;i++){let $=n*i/5;k+=`<text x="${f($)}" y="${r-o.b+24}" text-anchor="middle" class="ax">${E.format(Math.round($/100)*100)} ${s.unit}</text>`}for(let i of e){let $=L[i.model]??"#999",j=i.star?`<text x="${f(i.mil)}" y="${v(i.pris)-9}" text-anchor="middle" class="star">\u2605</text>`:"";k+=`<a href="${i.url}" target="_blank"><circle cx="${f(i.mil)}" cy="${v(i.pris)}" r="${i.star?7:5}" fill="${$}" fill-opacity="0.85" stroke="${i.star?"var(--text)":"none"}" stroke-width="1.5"><title>${i.model} ${i.year} \xB7 ${E.format(i.mil)} ${s.unit} \xB7 ${A(i.pris)}</title></circle>${j}</a>`}t.innerHTML=k}function y(){let e=_(),t=[...e].sort((r,o)=>{let c=R(r,s.sortKey),d=R(o,s.sortKey);if(c===null&&d===null)return 0;if(c===null)return 1;if(d===null)return-1;let n=typeof c=="string"&&typeof d=="string"?c.localeCompare(d,"sv"):c-d;return s.sortDir==="ascending"?n:-n});w("#marknad-meta").textContent=`${e.length} annonser`+(s.only2024?" (\xE5rsmodell 2024)":" (2023\u20132025)"),w("#cars-marknad tbody").replaceChildren(...t.map(r=>{let o=document.createElement("tr"),c=B(r);if(o.innerHTML=`
+        <td><span class="dot" style="background:${L[r.model]??"#999"}"></span>${r.model}${r.star?" \u2B50":""}</td>
+        <td><a href="${r.url}" target="_blank" rel="noopener">${r.heading.slice(0,64)}</a></td>
+        <td class="num">${r.year}</td>
+        <td class="num">${E.format(r.mil)}</td>
+        <td class="num">${r.wltp?r.wltp+" km":"\u2014"}</td>
+        <td class="num netto-cell"><span class="netto-val">${A(r.pris)}</span></td>
+        <td class="num">${c?E.format(Math.round(c))+" kr":"\u2014"}</td>
+      `,s.onCompare){let d=document.createElement("td");d.className="cmp",["A","B"].forEach(n=>{let l=document.createElement("button");l.textContent=n,l.title=`L\xE4gg i j\xE4mf\xF6relsen som Bil ${n}`,l.addEventListener("click",()=>s.onCompare?.(r,n)),d.append(l)}),o.append(d)}return o})),document.querySelectorAll("th[data-mkey]").forEach(r=>{let o=r.dataset.mkey;r.setAttribute("aria-sort",o===s.sortKey?s.sortDir:"none")}),D(e)}function F(e){let t=w("#model-chips"),a=[...new Set(s.rows.map(n=>n.model))].sort();a.forEach(n=>{(!e||e(n))&&s.activeModels.add(n)});let r=new Map,o=()=>{r.forEach((n,l)=>n.classList.toggle("active",s.activeModels.has(l)))};t.replaceChildren(...a.map(n=>{let l=document.createElement("button");return l.className="chip"+(s.activeModels.has(n)?" active":""),l.innerHTML=`<span class="dot" style="background:${L[n]??"#999"}"></span>${n}`,l.addEventListener("click",()=>{s.activeModels.has(n)?s.activeModels.delete(n):s.activeModels.add(n),l.classList.toggle("active"),y()}),r.set(n,l),l}));let c=[...new Set(s.rows.map(n=>n.segment).filter(Boolean))];if(c.length>1){let n=document.createElement("div");n.className="chips seg-chips";let l=(u,f)=>{let v=document.createElement("button");return v.className="chip seg-chip active",v.textContent=u,v.addEventListener("click",()=>{s.activeModels.clear(),f.forEach(k=>s.activeModels.add(k)),o(),y()}),v};n.append(l("Alla",a),...["stor","mellan","kompakt"].filter(u=>c.includes(u)).map(u=>l(N[u]??u,[...new Set(s.rows.filter(f=>f.segment===u).map(f=>f.model))]))),t.parentElement?.insertBefore(n,t)}let d=w("#only-2024");s.only2024=d.checked,d.addEventListener("change",()=>{s.only2024=d.checked,y()}),document.querySelectorAll("th[data-mkey]").forEach(n=>{n.addEventListener("click",()=>{let l=n.dataset.mkey;s.sortKey===l?s.sortDir=s.sortDir==="ascending"?"descending":"ascending":(s.sortKey=l,s.sortDir="ascending"),y()})})}async function C(e,t){try{t?.unit&&(s.unit=t.unit);let r=await(await fetch(t?.url??"/marknad.json")).json();s.rows=r.listings,s.fetched=r.fetched,s.onCompare=t?.onCompare;let o=document.querySelector("#marknad-fetched");o&&(o.textContent=r.fetched),F(e),y()}catch{let a=document.querySelector("#marknad-meta");a&&(a.textContent="Ingen marknadsdata (marknad.json saknas).")}}var S=[];async function I(){try{S=(await(await fetch("/recensioner.json")).json()).modeller}catch{S=[]}}function V(e){let t=e.toLowerCase();for(let a of S)if(a.match.some(r=>t.includes(r)))return a;return null}function x(e,t){return e.length?`<ul class="rev-list ${t}">${e.map(a=>`<li>${a}</li>`).join("")}</ul>`:""}function H(e,t){let a=V(t);if(!a){e.innerHTML="";return}let r=!a.styrkor.length&&!a.svagheter.length&&!a.fel.length;e.innerHTML=`
+    <details class="review" ${r?"":"open"}>
+      <summary>Recensioner & omd\xF6men \u2014 ${a.namn}</summary>
+      <p class="rev-betyg">${a.betyg}</p>
+      ${x(a.styrkor,"plus")}
+      ${x(a.svagheter,"minus")}
+      ${x(a.fel,"warn")}
+      ${a.not?`<p class="note">${a.not}</p>`:""}
+    </details>
+  `}var q={A:"#4cc38a",B:"#2bb3c0"},b=16e4,O=20,M=new Intl.NumberFormat("da-DK",{maximumFractionDigits:0}),h=e=>`${M.format(Math.round(e))} kr.`;function p(e){let t=document.querySelector(e);if(!t)throw new Error(`missing element: ${e}`);return t}var m={innehav:5,ranta:.055,kmPerAar:16e3,elpris:2.6,restPct:{A:.45,B:.45},fors:{A:1300,B:1400},service:700,ejerafgift:70};function K(e){return{navn:p(`#navn${e}`).value||`Bil ${e}`,pris:Number(p(`#prisIn${e}`).value)||0,km:Number(p(`#km${e}`).value)||0,wltp:Number(p(`#wltp${e}`).value)||0,aar:Number(p(`#aar${e}`).value)||2023}}function P(e,t){let a=m.innehav*12,r=t.pris*m.restPct[e],o=(t.pris-r)/a,c=(t.pris+r)/2*(m.ranta/12),d=m.kmPerAar*O/100*m.elpris/12;return{vardiTab:o,rente:c,el:d,forsikring:m.fors[e],service:m.service,ejerafgift:m.ejerafgift,total:o+c+d+m.fors[e]+m.service+m.ejerafgift}}var G=[["V\xE6rditab","vardiTab"],["Rente p\xE5 bundet kapital","rente"],["El","el"],["Forsikring","forsikring"],["Service + d\xE6k","service"],["Gr\xF8n ejerafgift","ejerafgift"],["I alt","total"]];function W(e,t){let a=P("A",e),r=P("B",t);p("#th-bilA").textContent=`A: ${e.navn}`,p("#th-bilB").textContent=`B: ${t.navn}`,p("#kalkyl tbody").replaceChildren(...G.map(([l,u])=>{let f=document.createElement("tr");return u==="total"&&(f.className="total-row"),f.innerHTML=`
+        <td>${l}</td>
+        <td class="num">${h(a[u])}</td>
+        <td class="num">${h(r[u])}</td>
+      `,f}));let c=r.total-a.total,d=c>=0?e.navn:t.navn,n=[];if(e.wltp&&t.wltp&&e.wltp!==t.wltp){let l=t.wltp>e.wltp?t:e;n.push(`${l.navn} har +${Math.abs(t.wltp-e.wltp)} km r\xE6kkevidde`)}if(e.km!==t.km){let l=t.km<e.km?t:e;n.push(`${l.navn} har ${M.format(Math.abs(e.km-t.km))} km mindre slid`)}p("#kalkyl-verdict").innerHTML=`<strong>${d} er ${h(Math.abs(c))}/md. billigere</strong> med de aktuelle antagelser (${m.innehav} \xE5rs ejertid, ${M.format(m.kmPerAar)} km/\xE5r).`+(n.length?` ${n.join("; ")}.`:"")}function Q(e,t){let a=p("#garanti"),r=[["A",e],["B",t]];a.replaceChildren(...r.map(([o,c])=>{let d=c.km+m.innehav*m.kmPerAar,n=Math.min(100,c.km/b*100),l=Math.min(100,d/b*100),u=(b-c.km)/m.kmPerAar,f=Math.max(0,c.aar+8-2026),k=u>f?`tidsgr\xE6nsen (~${c.aar+8}) styrer \u2014 km-loftet n\xE5s ikke i dette tempo`:u>=m.innehav?`km-loftet n\xE5s efter ~${u.toFixed(1)} \xE5r \u2014 d\xE6kker ejertiden`:`\u26A0 km-loftet n\xE5s efter ~${u.toFixed(1)} \xE5r \u2014 F\xD8R ejertiden slutter`,i=document.createElement("div");return i.className="garanti-row",i.innerHTML=`
+        <div class="garanti-label">${o}: ${c.navn} <span class="note">${M.format(c.km)} \u2192 ~${M.format(d)} km af ${M.format(b)}</span></div>
+        <div class="garanti-bar">
+          <div class="garanti-fill" style="width:${n}%; background:${q[o]}"></div>
+          <div class="garanti-drive" style="left:${n}%; width:${l-n}%"></div>
+        </div>
+        <div class="note">${k}</div>
+      `,i}))}function T(){let e=K("A"),t=K("B");W(e,t),Q(e,t),H(p("#review-A"),e.navn),H(p("#review-B"),t.navn)}function g(e,t,a,r){let o=p(e),c=p(t),d=()=>{let n=Number(o.value);a(n),c.textContent=r(n),T()};o.addEventListener("input",d),c.textContent=r(Number(o.value))}async function X(){await I(),document.querySelectorAll(".bil-inputs input").forEach(e=>e.addEventListener("input",T)),g("#innehav","#innehav-out",e=>m.innehav=e,e=>`${e} \xE5r`),g("#ranta","#ranta-out",e=>m.ranta=e/100,e=>`${e.toFixed(1)} %`),g("#mil","#mil-out",e=>m.kmPerAar=e,e=>`${M.format(e)} km/\xE5r`),g("#elpris","#elpris-out",e=>m.elpris=e,e=>`${e.toFixed(2)} kr./kWh`),g("#restA","#restA-out",e=>m.restPct.A=e/100,e=>`${e} %`),g("#restB","#restB-out",e=>m.restPct.B=e/100,e=>`${e} %`),g("#forsA","#forsA-out",e=>m.fors.A=e,e=>`${h(e)}/md.`),g("#forsB","#forsB-out",e=>m.fors.B=e,e=>`${h(e)}/md.`),g("#service","#service-out",e=>m.service=e,e=>`${h(e)}/md.`),g("#ejerafgift","#ejerafgift-out",e=>m.ejerafgift=e,e=>`${h(e)}/md.`),T(),C(void 0,{url:"/marknad-dk.json",unit:"km",onCompare:(e,t)=>{p(`#navn${t}`).value=e.heading.replace(/^Brugt \(\d{4}\)\s*/,"").slice(0,48)||e.model,p(`#prisIn${t}`).value=String(e.pris),p(`#km${t}`).value=String(e.mil??0),p(`#wltp${t}`).value=e.wltp?String(e.wltp):"",p(`#aar${t}`).value=String(e.year),T(),document.querySelector(".bil-inputs")?.scrollIntoView({behavior:"smooth"})}})}X();})();
+
+</script>
+  </body>
+</html>
